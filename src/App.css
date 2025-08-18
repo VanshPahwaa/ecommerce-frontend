@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+    --color-lightO: #FF9F00;
+    --color-lightG: #00C8BB;
+    --color-darkG: #00a697;
+    --animate-loading:loading 3s infinite;
+    
+
+    @keyframes loading {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity:0.2;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+}

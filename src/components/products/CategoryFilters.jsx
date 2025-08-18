@@ -1,0 +1,367 @@
+'use client'
+
+import { useEffect, useState, useRef } from 'react'
+import { useSelector, useDispatch } from "react-redux"
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from '@headlessui/react'
+import { XMarkIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, FunnelIcon, MinusIcon, PlusIcon, Squares2X2Icon } from '@heroicons/react/20/solid'
+
+
+import Pagebar from '../navbar/Pagebar'
+import ProductList from './ProductList'
+import { fetchAllProducts, fetchByFilter } from '../../redux-features/products/productApi'
+import { fetchCart } from '../../redux-features/cart/cartApi'
+
+
+
+
+
+const sortOptions = [
+  { name: 'Discount', order: 'asc', value: "discountPercentage", href: '#', current: false },
+  { name: 'Best Rating', order: 'desc', value: "rating", href: '#', current: false },
+  { name: 'Price: Low to High', order: 'asc', value: "price", href: '#', current: false },
+  { name: 'Price: High to Low', order: 'desc', value: "price", href: '#', current: false },
+]
+
+
+
+
+
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ')
+}
+
+export default function CategoryFilters() {
+
+
+  const dispatch = useDispatch()
+  const totalProducts = useSelector(state => state.product.totalProducts)
+
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [filter, setFilter] = useState({})
+  const [sort, setSort] = useState({})
+  const [page, setPage] = useState({ currentPage: 1, perPage: 12 })
+
+
+
+  const filters = useRef(
+    [
+      {
+        id: 'category',
+        name: 'Category',
+        options: [
+          { value: 'beauty', checked: false, label: 'beauty' },
+          { value: 'fragrances', checked: false, label: 'fragrances' },
+          { value: 'furniture', checked: false, label: 'furniture' },
+          { value: 'groceries', checked: false, label: 'groceries' },
+          { value: 'home-decoration', checked: false, label: 'home-decoration' },
+          { value: 'kitchen-accessories', checked: false, label: 'kitchen-accessories' },
+          { value: 'laptops', checked: false, label: 'laptops' },
+          { value: 'mens-shirts', checked: false, label: 'mens-shirts' },
+          { value: 'mens-shoes', checked: false, label: 'mens-shoes' },
+          { value: 'mens-watches', checked: false, label: 'mens-watches' },
+          { value: 'mobile-accessories', checked: false, label: 'mobile-accessories' }
+        ],
+      },]
+
+  )
+
+
+
+  const loggedInUser = useSelector((state) => state.user.loggedInUser)
+  if (loggedInUser.userId) {
+    dispatch(fetchCart(loggedInUser.userId))
+    // it will only accept first argument, if not passed in object
+  }
+
+
+
+
+
+  function handleSort(event, option) {
+    event.preventDefault()
+    setSort({ value: option.value, order: option.order })
+  }
+
+  function handleFilters(event, section, option) {
+    let newFilter = { ...filter }
+    
+    if (event.target.checked) {
+      
+      if (newFilter[section.id]) {
+        newFilter[section.id].push(option.value)
+      } else {
+        newFilter[section.id] = [option.value]
+      }
+    } else {
+      
+      const tempSection = newFilter[section.id].filter(items => items != option.value)
+      newFilter[section.id] = [...tempSection]
+    }
+    setFilter(newFilter)
+  }
+
+  function handlePage(nextPage) {
+    setPage(oldData => {
+      return { ...oldData, 'currentPage': nextPage }
+    })
+  }
+
+  useEffect(() => {
+    dispatch(fetchByFilter({ filter, sort, page }))
+  }, [filter, sort, page])
+
+
+
+  return (
+    <>
+      <div className="bg-white">
+        <div>
+          {/* Mobile filter dialog */}
+          <MobileFiltersDailog mobileFiltersOpen={mobileFiltersOpen} handleFilters={handleFilters} filters={filters} setMobileFiltersOpen={setMobileFiltersOpen} />
+
+          <main className="mx-auto max-w-7xl px-4 sm:px-4 lg:px-3">
+            <div className="flex items-baseline justify-between border-b border-gray-200 pt-24 pb-6">
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900">New Arrivals</h1>
+
+              <div className="flex items-center">
+                <Menu as="div" className="relative inline-block text-left">
+                  <MenuButton className="group inline-flex justify-center text-sm font-medium text-gray-700 hover:text-gray-900">
+                    Sort
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="-mr-1 ml-1 size-5 shrink-0 text-gray-400 group-hover:text-gray-500"
+                    />
+                  </MenuButton>
+
+                  <MenuItems
+                    transition
+                    className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-2xl ring-1 ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+
+                  >
+                    <div className="py-1">
+                      {sortOptions.map((option) => (
+                        <MenuItem key={option.value} onClick={(e) => handleSort(e, option)}>
+                          <button
+                            className={classNames(
+                              sort.value == option.value && sort.order == option.order ? 'font-medium text-gray-900' : 'text-gray-500',
+                              'block px-4 py-2 text-sm data-focus:bg-gray-100 data-focus:outline-hidden',
+                            )}
+                          >
+                            {option.name}
+                          </button>
+                        </MenuItem>
+                      ))}
+                    </div>
+                  </MenuItems>
+                </Menu>
+
+                
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
+                >
+                  <span className="sr-only">Filters</span>
+                  <FunnelIcon aria-hidden="true" className="size-5" />
+                </button>
+              </div>
+            </div>
+
+            <section aria-labelledby="products-heading" className="pt-6 pb-24">
+              <h2 id="products-heading" className="sr-only">
+                Products
+              </h2>
+
+              <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+                {/* Filters */}
+                <form className="hidden lg:block">
+                  <h3 className="sr-only">Categories</h3>
+
+
+                  {filters.current.map((section) => (
+                    <Disclosure key={section.id} as="div" className="border-b border-gray-200 py-6">
+                      <h3 className="-my-3 flow-root">
+                        <DisclosureButton className="group flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500">
+                          <span className="font-medium text-gray-900">{section.name}</span>
+                          <span className="ml-6 flex items-center">
+                            <PlusIcon aria-hidden="true" className="size-5 group-data-open:hidden" />
+                            <MinusIcon aria-hidden="true" className="size-5 group-not-data-open:hidden" />
+                          </span>
+                        </DisclosureButton>
+                      </h3>
+                      <DisclosurePanel className="pt-6">
+                        <div className="space-y-4">
+                          {section.options.map((option, optionIdx) => (
+                            <div key={option.value} className="flex gap-3">
+                              <div className="flex h-5 shrink-0 items-center">
+                                <div className="group grid size-4 grid-cols-1">
+                                  <input
+                                    defaultValue={option.value}
+                                    defaultChecked={option.checked}
+                                    id={`filter-${section.id}-${optionIdx}`}
+                                    name={`${section.id}[]`}
+                                    onChange={(e) =>
+                                      handleFilters(e, section, option)
+                                    }
+                                    type="checkbox"
+                                    className="col-start-1 row-start-1 appearance-none rounded-sm border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto"
+                                  />
+                                  <svg
+                                    fill="none"
+                                    viewBox="0 0 14 14"
+                                    className="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-disabled:stroke-gray-950/25"
+                                  >
+                                    <path
+                                      d="M3 8L6 11L11 3.5"
+                                      strokeWidth={2}
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="opacity-0 group-has-checked:opacity-100"
+                                    />
+                                    <path
+                                      d="M3 7H11"
+                                      strokeWidth={2}
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="opacity-0 group-has-indeterminate:opacity-100"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                              <label htmlFor={`filter-${section.id}-${optionIdx}`} className="text-sm text-gray-600">
+                                {option.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </DisclosurePanel>
+                    </Disclosure>
+                  ))}
+                </form>
+
+                {/* Product grid */}
+                <div className="lg:col-span-3"><ProductList /></div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+      <Pagebar totalProducts={totalProducts} page={page} handlePage={handlePage} setPage={setPage} />
+    </>
+  )
+}
+
+
+function MobileFiltersDailog({ mobileFiltersOpen, setMobileFiltersOpen, filters, handleFilters }) {
+
+  return (
+    <Dialog open={mobileFiltersOpen} onClose={setMobileFiltersOpen} className="relative z-40 lg:hidden">
+      <DialogBackdrop
+        transition className="fixed inset-0 bg-black/25 transition-opacity duration-300 ease-linear data-closed:opacity-0"
+      />
+
+      <div className="fixed inset-0 z-40 flex">
+        <DialogPanel
+          transition
+          className="relative ml-auto flex size-full max-w-xs transform flex-col overflow-y-auto bg-white pt-4 pb-6 shadow-xl transition duration-300 ease-in-out data-closed:translate-x-full"
+        >
+          <div className="flex items-center justify-between px-4">
+            <h2 className="text-lg font-medium text-gray-900">Filters</h2>
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(false)}
+              className="relative -mr-2 flex size-10 items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+            >
+              <span className="absolute -inset-0.5" />
+              <span className="sr-only">Close menu</span>
+              <XMarkIcon aria-hidden="true" className="size-6" />
+            </button>
+          </div>
+
+          {/* Filters */}
+          <form className="mt-4 border-t border-gray-200">
+            <h3 className="sr-only">Categories</h3>
+
+
+            {filters.current.map((section) => (
+              <Disclosure key={section.id} as="div" className="border-t border-gray-200 px-4 py-6">
+                <h3 className="-mx-2 -my-3 flow-root">
+                  <DisclosureButton className="group flex w-full items-center justify-between bg-white px-2 py-3 text-gray-400 hover:text-gray-500">
+                    <span className="font-medium text-gray-900">{section.name}</span>
+                    <span className="ml-6 flex items-center">
+                      <PlusIcon aria-hidden="true" className="size-5 group-data-open:hidden" />
+                      <MinusIcon aria-hidden="true" className="size-5 group-not-data-open:hidden" />
+                    </span>
+                  </DisclosureButton>
+                </h3>
+                <DisclosurePanel className="pt-6">
+                  <div className="space-y-6">
+                    {section.options.map((option, optionIdx) => (
+                      <div key={option.value} className="flex gap-3">
+                        <div className="flex h-5 shrink-0 items-center">
+                          <div className="group grid size-4 grid-cols-1">
+                            <input
+                              defaultValue={option.value}
+                              id={`filter-mobile-${section.id}-${optionIdx}`}
+                              name={`${section.id}[]`}
+                              type="checkbox"
+                              defaultChecked={option.checked}
+                              onChange={(e) =>
+                                handleFilters(e, section, option)
+                              }
+                              className="col-start-1 row-start-1 appearance-none rounded-sm border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto"
+                            />
+                            <svg
+                              fill="none"
+                              viewBox="0 0 14 14"
+                              className="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-disabled:stroke-gray-950/25"
+                            >
+                              <path
+                                d="M3 8L6 11L11 3.5"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="opacity-0 group-has-checked:opacity-100"
+                              />
+                              <path
+                                d="M3 7H11"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="opacity-0 group-has-indeterminate:opacity-100"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                        <label
+                          htmlFor={`filter-mobile-${section.id}-${optionIdx}`}
+                          className="min-w-0 flex-1 text-gray-500"
+                        >
+                          {option.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </DisclosurePanel>
+              </Disclosure>
+            ))}
+          </form>
+        </DialogPanel>
+      </div>
+    </Dialog>
+
+  )
+
+}
