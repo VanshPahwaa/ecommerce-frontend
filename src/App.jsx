@@ -18,7 +18,7 @@ import ProductDetailsPage from './pages/ProductDetailsPage';
 import Signup from './components/auth/Signup';
 import NotFound from './pages/NotFound';
 import OrderSuccess from './pages/OrderSuccess';
-import ForgetPassword from './pages/forgetPassword';
+import ForgetPassword from './pages/ForgetPassword';
 import ResetPassword from './pages/ResetPassword';
 import UserOrders from './pages/UserOrders';
 import UserProfile from './pages/UserProfile';
